@@ -53,20 +53,28 @@ resource "azurerm_cosmosdb_account" "cosmos" {
   offer_type          = "Standard"
   kind                = "MongoDB"
   
-  enable_automatic_failover = true
+  enable_automatic_failover       = true
+  enable_multiple_write_locations = true
   
   consistency_policy {
     consistency_level       = "BoundedStaleness"
-    max_interval_in_seconds = 10
-    max_staleness_prefix    = 200
+    max_interval_in_seconds = 300
+    max_staleness_prefix    = 100000
   }
- 
+
   geo_location {
-    location          = var.location_backup
+    prefix            = "${local.base_name}-db-${var.location}"
+    location          = var.location
     failover_priority = 0
   }
+
+  geo_location {
+    prefix            = "${local.base_name}-db-${var.location_backup}"
+    location          = var.location_backup
+    failover_priority = 1
+  }
 }
- 
+
 resource "azurerm_cosmosdb_mongo_database" "db" {
   name                = "${local.base_name}-db"
   resource_group_name = azurerm_resource_group.rg.name
